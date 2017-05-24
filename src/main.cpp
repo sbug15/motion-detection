@@ -26,6 +26,40 @@ cv::Mat flowToBGR(const cv::Mat& flow)
   return flow_bgr;
 }
 
+cv::Rect maxRoiContour(const cv::Mat& flow_gray)
+{
+  
+  std::vector<std::vector<cv::Point> > contours;
+  std::vector<cv::Vec4i> hierarchy;
+  cv::findContours(flow_gray, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
+      
+  cv::Rect roi(0, 0, 0, 0);
+
+  if (!contours.empty())
+    {
+      int idx_largest_contour = -1;
+      double area_largest_contour = 0.0;
+
+      for (int i = 0; i < contours.size(); ++i)
+	{
+	  double area = cv::contourArea(contours[i]);
+	  if (area_largest_contour < area)
+	    {
+	      area_largest_contour = area;
+	      idx_largest_contour = i;
+	    }
+	}
+
+      if (area_largest_contour > 500)
+	{
+	  roi = cv::boundingRect(contours[idx_largest_contour]);
+	}
+    }
+  
+  return roi;
+      
+}
+
 int main()
 {
   cv::VideoCapture cap(0);
@@ -60,37 +94,10 @@ int main()
       cv::Mat dilateElement = cv::getStructuringElement( cv::MORPH_RECT, cv::Size(10,10));
       cv::dilate(flow_gray, flow_gray, dilateElement);
       
-      
-      std::vector<std::vector<cv::Point> > contours;
-      std::vector<cv::Vec4i> hierarchy;
-      cv::findContours(flow_gray, contours, hierarchy, CV_RETR_TREE, CV_CHAIN_APPROX_SIMPLE);
-      
-      cv::Rect roi;
-      if (!contours.empty())
-        {
-          int idx_largest_contour = -1;
-          double area_largest_contour = 0.0;
+      cv::Rect roi = maxRoiContour(flow_gray);
 
-          for (int i = 0; i < contours.size(); ++i)
-            {
-              double area = cv::contourArea(contours[i]);
-              if (area_largest_contour < area)
-                {
-                  area_largest_contour = area;
-                  idx_largest_contour = i;
-                }
-            }
-
-          if (area_largest_contour > 500)
-            {
-      	      roi = cv::boundingRect(contours[idx_largest_contour]);
-		{
-		  cv::drawContours(curFrame, contours, idx_largest_contour, cv::Scalar(0, 0, 255));
-		  cv::rectangle(curFrame, roi, cv::Scalar(0, 255, 0), 4);
-		}
-      	    }
-      	}      
-      
+      if (roi.area() > 0)
+	cv::rectangle(curFrame, roi, cv::Scalar(0, 255, 0), 4);	
       cv::imshow("curFrame", curFrame);
       
       curGray.copyTo(prevGray);
