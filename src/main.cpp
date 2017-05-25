@@ -1,4 +1,5 @@
 #include <opencv2/opencv.hpp>
+#include <opencv2/features2d/features2d.hpp>
 #include <iostream>
 
 cv::Mat flowToBGR(const cv::Mat& flow)
@@ -85,7 +86,13 @@ int main()
       cv::equalizeHist(curGray, curGray);
       
       cv::calcOpticalFlowFarneback(prevGray, curGray, flow, 0.5, 5, 21, 3, 5, 1.2, cv::OPTFLOW_FARNEBACK_GAUSSIAN); 
+      // cv::GoodFeaturesToTrackDetector detector;
 
+      cv::goodFeaturesToTrack;
+      // std::vector<cv::KeyPoint> keyPoints;
+      // std::vector<cv::Point2f> kpBefore, kpAfter;
+      // detector.detect(prevGray, keyPoints);
+      
       cv::cvtColor(flowToBGR(flow), flow_gray, cv::COLOR_BGR2GRAY);
 
       cv::Mat thresh;
